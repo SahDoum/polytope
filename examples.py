@@ -1,8 +1,9 @@
 from polytope import *
 
-def right_120cell():  
+def right_120cell(alpha=2.513):  
     phi = (math.sqrt(5)+1)/2
     x_coord = (phi ** 3)
+
     simp = Simplex()
     simp.add_vert(Point(4, x_coord, 1, 1, 1)) # <-
     simp.add_vert(Point(4, x_coord, 1, 1, -1))
@@ -25,10 +26,12 @@ def right_120cell():
     simp.add_vert(Point(4, x_coord, -1/phi, 0, phi)) # <-
     simp.add_vert(Point(4, x_coord, -1/phi, 0, -phi))
     simp.add_minimal_edges()
-    p = Point(4, -phi/2, 0, 1/2/phi, 1/2)
-    simp_r = simp.reflect(p, -(p*Point(4, x_coord, -1, -1, -1))) # <-
+
+    ambda = math.cos(alpha) / math.sqrt(1/4*(1/phi**2+1)) #math.sin(144/180*2*math.pi)
+    p = Point(4, math.sin(alpha), 0, ambda/2/phi, ambda/2)
+    simp_r = simp.reflect(p, -(p*Point(4, x_coord, 1, 1, 1))) # <-
     doubled_dod = simp.glue(simp_r)
-    inthreedim = doubled_dod.stereographic(Point(4, 100000, 0, 0, 0), 0) #x_coord+0.4
+    inthreedim = doubled_dod.stereographic(Point(4, x_coord+100000.4, 0, 0, 0), 0)
     
     return inthreedim   
 
@@ -58,6 +61,7 @@ def dodecahedron():
     simp.add_vert(Point(3, -1/phi, 0, phi)) # <-
     simp.add_vert(Point(3, -1/phi, 0, -phi))
     simp.add_minimal_edges()
+
     p = Point(3, 0, 1/2/phi, 1/2)
     simp_r = simp.reflect(p, -(p*Point(3, 1, 1, 1))) # <-
     doubled_dod = simp.glue(simp_r)

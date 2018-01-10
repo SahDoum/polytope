@@ -58,9 +58,11 @@ class Point:
         refl_point = Point(v.dim)
         pv = v*p
         vv = v*v
-        for i in range(len(p.coords)):
-            delta = 2*pv/vv*v.coords[i] + 2*d*v.coords[i]/vv
-            refl_point.coords.append(p.coords[i] - delta)
+        c = 2*(pv+d)/vv
+        refl_point = p - c*v
+        #for i in range(len(p.coords)):
+        #    delta = 2*pv/vv*v.coords[i] + 2*d*v.coords[i]/vv
+        #    refl_point.coords.append(p.coords[i] - delta)
         return refl_point
 
     def len(p1, p2):
@@ -74,13 +76,19 @@ class Point:
     def stereographic(self, o_point, i_coord):
         if self.dim != o_point.dim:
             return None
-        p = Point(self.dim-1)
+
         k = o_point.coords[i_coord]/(o_point.coords[i_coord] - self.coords[i_coord])
+        p = o_point + k*(self - o_point)
+        p.coords.pop(i_coord)
+        p.dim -= 1
+        '''
+        p = Point(self.dim-1)
         for i in range(self.dim):
             if i == i_coord:
                 continue
             new_coord = o_point.coords[i] + k*(self.coords[i] - o_point.coords[i])
             p.coords.append(new_coord)
+        '''
            
         return p
            
@@ -168,12 +176,13 @@ class Simplex:
                     e = Edge(v1, v2)
                     s.add_edge(e)
 
-    def matrix(self):
+    def matrix(self, file_name=None):
+        file = open(file_name, 'a')
         for i, v in enumerate(self.vertices):
             str = '{}. '.format(i+1)
             for c in v.coords:
                 str += '{}; '.format(c)
-            print(str+'\n')
+            print(str+'\n', file=file)
         matrix = {}
         for i in range(len(self.vertices)):
             matrix[i] = {}
@@ -185,7 +194,7 @@ class Simplex:
                 else:
                     matrix[i][j] = 0
                 str += '{} '.format(matrix[i][j])
-            print(str)
+            print(str, file=file)
 
         return matrix
        
@@ -196,5 +205,3 @@ class Simplex:
         # for e in self.edges:
         #     text += '\n{}'.format(e)
         return text
-
-# 10 января 13:00 Стекловка
