@@ -2,12 +2,16 @@ import pygame
 from pygame import *
 import sys
 import math
+from pyquaternion import Quaternion
+
 import examples
+from polytope import cross_product
 
 class Cam:
     def __init__(self, pos=(0,0,0), rot=(0,0,0)):
         self.pos = list(pos)
         self.rot = list(rot)
+        self.quat = Quaternion(axis=[1, 0, 0], degrees=0)
 
     def update(self, dt, key):
         s = dt / 200
@@ -30,29 +34,44 @@ class Cam:
             x, y = event.rel
             x /= 1000
             y /= 1000
-            self.rot[0] += y
-            self.rot[1] -= x 
+            #self.rot[0] += y #*math.cos(self.rot[0])-x*math.sin(self.rot[1])
+            #self.rot[1] -= x 
+            q1 = Quaternion(axis=[1, 0, 0], angle=y)
+            q2 = Quaternion(axis=[0, 1, 0], angle=-x)
+            self.quat = q2*q1*self.quat
 
 
 class PolytopeView:
-    polytopes = [examples.right_120cell, examples.football, examples.sliced_cube]
-    params = {examples.right_120cell: -2.513}
+    polytope_list = [examples.right_120cell, examples.right_120cell2, examples.sliced_cube, examples.football]
+    params = {examples.right_120cell2: -18/180*math.pi, examples.sliced_cube: 0.2}
 
     def __init__(self):
-        self.alpha = -2.513
-        self.polytope_num = 0
+        self.alpha = 0
+        self.polytope_num = -1
+        self.next()
 
     def get_polytope(self):
-        pol_func = self.polytopes[self.polytope_num]
+        return self.polytope
+        pol_func = self.polytope_list[self.polytope_num]
         if pol_func in self.params:
             return pol_func(self.alpha)
         return pol_func()
 
     def next(self):
-        self.polytope_num = (self.polytope_num + 1) % len(self.polytopes)
-        next_pol = self.polytopes[self.polytope_num]
-        if next_pol in self.params:
-            self.alpha = self.params[next_pol]
+        self.polytope_num = (self.polytope_num + 1) % len(self.polytope_list)
+        pol_func = self.polytope_list[self.polytope_num]
+        if pol_func in self.params:
+            self.alpha = self.params[pol_func]
+            self.polytope = pol_func(self.alpha)
+        else:
+            self.polytope = pol_func()
+            #self.alpha = self.params[next_pol]
+
+    def change_parameter(self, alpha):
+        self.alpha = alpha
+
+        if self.polytope_list[self.polytope_num] in self.params:
+            self.polytope = self.polytope_list[self.polytope_num](alpha)
 
 
 
@@ -78,17 +97,14 @@ def point_to_screen(point):
     if point.dim != 3:
         return None
 
-    x, y, z = point.coords
-
-    x, z = rotate2d((x, z), cam.rot[1])
-    y, z = rotate2d((y, z), cam.rot[0])
+    x, y, z = cam.quat.rotate(point.coords)
 
     x -= cam.pos[0]
     y -= cam.pos[1]
     z -= cam.pos[2]
 
-    # z += 5
-    f = 100*cam.pos[2]/z
+    z += 5
+    f = 200*cam.pos[2]/z
     x, y = x*f, y*f
 
     return (cx + int(x), cy + int(y))
@@ -96,7 +112,7 @@ def point_to_screen(point):
 def main():
     pygame.init() 
     screen = pygame.display.set_mode(DISPLAY) 
-    pygame.display.set_caption("Polytopes") 
+    pygame.display.set_caption("polytope_list") 
     bg = Surface((WIN_WIDTH,WIN_HEIGHT)) 
 
     pygame.event.get()
@@ -116,7 +132,35 @@ def main():
         simp = pol.get_polytope() #examples.football(alpha=alpha)#right_120cell(alpha)
 
         screen.fill(Color(BACKGROUND_COLOR))
-        
+
+        '''
+        front_vert = []
+        l = len(simp.vertices)
+        for i in range(l):
+            for j in range(i+1, l):
+                for k in range(j+1, l):
+                    p = cross_product(simp.vertices[i] - simp.vertices[k], 
+                                      simp.vertices[j] - simp.vertices[k])
+                    d = -1*p*simp.vertices[k]
+                    if d > 0:
+                    #    print('HGRJDFSJDFJSJ')
+                        p = -1*p
+                        d *= -1
+
+                    is_front = True
+                    for vert in simp.vertices:
+                        print('{} {} {}'.format(i, j, k))
+                        if p*vert + d < -0.0001:
+                    #        print('{}'.format(p*vert+d))
+                            is_front = False
+                            break
+
+                    if is_front:
+                        print('{} {} {}', i, j, k)
+                        front_vert.append(simp.vertices[i])
+                        front_vert.append(simp.vertices[j])
+                        front_vert.append(simp.vertices[k])
+        '''
         for vert in simp.vertices:
             coords = point_to_screen(vert)
 
@@ -126,24 +170,24 @@ def main():
             v1_coords = point_to_screen(edge.v1)
             v2_coords = point_to_screen(edge.v2)
             pygame.draw.line(screen, (0, 0, 0), v1_coords, v2_coords, 1)
-
         
         pygame.display.flip()
 
         key = pygame.key.get_pressed()
         if key[pygame.K_k]:
-            pol.alpha += dt/1000
-            print(pol.alpha*180/6.24318)
+            pol.change_parameter(pol.alpha + dt/2000)
+            print(pol.alpha*180/math.pi+90)
         if key[pygame.K_j]:
-            pol.alpha -= dt/1000
-            print(pol.alpha*180/6.24318)
+            pol.change_parameter(pol.alpha - dt/2000)
+            print(pol.alpha*180/math.pi+90)
         if key[pygame.K_RETURN]:
             pol.next()
         cam.update(dt, key)
         
 
 if __name__ == "__main__":
-    examples.right_120cell().matrix('examples/120cell.txt')
-    examples.football().matrix('examples/football.txt')
+    examples.right_120cell().matrix('examples/120cell_1_inner_cell.txt')
+    examples.right_120cell2().matrix('examples/120cell_2_inner_cells.txt')
+    examples.football().matrix('examples/sliced_icosahedron.txt')
     examples.sliced_cube().matrix('examples/sliced_cube.txt')
     main()

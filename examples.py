@@ -1,8 +1,8 @@
 from polytope import *
 
-def right_120cell(alpha=2.513):  
+def right_120cell(alpha=-18/180*math.pi):  
     phi = (math.sqrt(5)+1)/2
-    x_coord = (phi ** 3)
+    x_coord = (phi ** 3) * 0
 
     simp = Simplex()
     simp.add_vert(Point(4, x_coord, 1, 1, 1)) # <-
@@ -27,11 +27,50 @@ def right_120cell(alpha=2.513):
     simp.add_vert(Point(4, x_coord, -1/phi, 0, -phi))
     simp.add_minimal_edges()
 
-    ambda = math.cos(alpha) / math.sqrt(1/4*(1/phi**2+1)) #math.sin(144/180*2*math.pi)
+    ambda = math.cos(alpha) / math.sqrt(1/4*(1/phi**2+1))
     p = Point(4, math.sin(alpha), 0, ambda/2/phi, ambda/2)
     simp_r = simp.reflect(p, -(p*Point(4, x_coord, 1, 1, 1))) # <-
     doubled_dod = simp.glue(simp_r)
-    inthreedim = doubled_dod.stereographic(Point(4, x_coord+100000.4, 0, 0, 0), 0)
+    inthreedim = doubled_dod.stereographic(Point(4, x_coord + 0.5, 0, 0, 0), 0)
+    
+    return inthreedim  
+
+
+def right_120cell2(alpha=-18/180*math.pi):  
+    phi = (math.sqrt(5)+1)/2
+    x_coord = 0
+
+    simp = Simplex()
+    simp.add_vert(Point(4, x_coord, 1, 1, 1)) # <-
+    simp.add_vert(Point(4, x_coord, 1, 1, -1))
+    simp.add_vert(Point(4, x_coord, 1, -1, 1))
+    simp.add_vert(Point(4, x_coord, 1, -1, -1))
+    simp.add_vert(Point(4, x_coord, -1, 1, 1)) # <-
+    simp.add_vert(Point(4, x_coord, -1, 1, -1))
+    simp.add_vert(Point(4, x_coord, -1, -1, 1))
+    simp.add_vert(Point(4, x_coord, -1, -1, -1))
+    simp.add_vert(Point(4, x_coord, 0, phi, 1/phi)) # <-
+    simp.add_vert(Point(4, x_coord, 0, phi, -1/phi))
+    simp.add_vert(Point(4, x_coord, 0, -phi, 1/phi)) 
+    simp.add_vert(Point(4, x_coord, 0, -phi, -1/phi))
+    simp.add_vert(Point(4, x_coord, phi, 1/phi, 0))
+    simp.add_vert(Point(4, x_coord, phi, -1/phi, 0))
+    simp.add_vert(Point(4, x_coord, -phi, 1/phi, 0))
+    simp.add_vert(Point(4, x_coord, -phi, -1/phi, 0))
+    simp.add_vert(Point(4, x_coord, 1/phi, 0, phi)) # <-
+    simp.add_vert(Point(4, x_coord, 1/phi, 0, -phi))
+    simp.add_vert(Point(4, x_coord, -1/phi, 0, phi)) # <-
+    simp.add_vert(Point(4, x_coord, -1/phi, 0, -phi))
+    simp.add_minimal_edges()
+
+    ambda = math.cos(alpha) / math.sqrt(1/4*(1/phi**2+1))
+    p = Point(4, math.sin(alpha), 0, ambda/2/phi, ambda/2)
+    simp_r = simp.reflect(p, -(p*Point(4, x_coord, 1, 1, 1))) # <-
+    p2 = Point(4, -math.sin(alpha), 0, ambda/2/phi, ambda/2)
+    simp_r2 = simp.reflect(p2, -(p2*Point(4, x_coord, -1, -1, -1))) # <-
+    doubled_dod = simp.glue(simp_r)
+    doubled_dod = doubled_dod.glue(simp_r2)
+    inthreedim = doubled_dod.stereographic(Point(4, x_coord + 0.5, 0, 0, 0), 0)
     
     return inthreedim   
 
@@ -69,7 +108,7 @@ def dodecahedron():
     
     return doubled_dod
 
-def sliced_cube(alpha=0.1):
+def sliced_cube(alpha=0.3):
     simp = Simplex()
     p1 = Point(3, 0, 0, 0)
     p2_1 = Point(3, 0, 0, 1-alpha)
@@ -180,8 +219,7 @@ def football():
             v2 = e.v1 if v1 == e.v2 else e.v2
             v_tmp = v2 - v1
             v3 = v1 + 1/math.sqrt(v_tmp*v_tmp)*c*v_tmp
-            # v3 = c1*v2 + (1-c1)*v
-            print('Hi')
+
             if v1 == e.v1:
                 e.v1 = v3
             else:

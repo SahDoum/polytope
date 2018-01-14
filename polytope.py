@@ -51,7 +51,7 @@ class Point:
         for i in range(p1.dim):
             new_point.coords.append(p1.coords[i]*number)
         return new_point
-       
+
     def reflect(p, v, d):
         if v.dim != p.dim:
             return None
@@ -81,16 +81,18 @@ class Point:
         p = o_point + k*(self - o_point)
         p.coords.pop(i_coord)
         p.dim -= 1
-        '''
-        p = Point(self.dim-1)
-        for i in range(self.dim):
-            if i == i_coord:
-                continue
-            new_coord = o_point.coords[i] + k*(self.coords[i] - o_point.coords[i])
-            p.coords.append(new_coord)
-        '''
            
         return p
+
+def cross_product(v1, v2):
+    if v1.dim != 3 != v2.dim:
+        return
+
+    x1, y1, z1 = v1.coords
+    x2, y2, z2 = v2.coords
+
+    return Point(3, y1*z2-z1*y2, z1*x2-z2*x1, x1*y2-y1*x2)
+
            
 class Edge:
     def __init__(self, v1, v2):
@@ -177,7 +179,7 @@ class Simplex:
                     s.add_edge(e)
 
     def matrix(self, file_name=None):
-        file = open(file_name, 'a')
+        file = open(file_name, 'w') if file_name else None
         for i, v in enumerate(self.vertices):
             str = '{}. '.format(i+1)
             for c in v.coords:
@@ -202,6 +204,6 @@ class Simplex:
         text = 'Simplex: '
         for v in self.vertices:
             text += '\n{}'.format(v)
-        # for e in self.edges:
-        #     text += '\n{}'.format(e)
+        for e in self.edges:
+            text += '\n{}'.format(e)
         return text
